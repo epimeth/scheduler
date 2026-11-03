@@ -28,6 +28,8 @@ This is a front-end challenge called “Conflict-Aware Scheduler.” You will bu
 
 There is deliberately no provided design or detailed spec. Make the product decisions you think are right, and be prepared to defend them.
 
+Make sure to create each component in it's own file, according to nextjs best practices.
+
 Adding a session should be done via a dedicated button and modal.
 The session timeline should include all 5 days of the week, with a toggle to display the weekend, and the current day highlighted.
 The "weekend" toggle should be highlighted if there is an existing session for the upcoming weekend.
