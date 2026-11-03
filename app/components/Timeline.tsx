@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Session } from "@/lib/types";
 import { toISODate } from "@/lib/utils";
 import DaySessions from "./DaySessions";
@@ -28,10 +28,19 @@ export default function Timeline({
 }: TimelineProps) {
   // Track current time to position the red indicator line
   const [now, setNow] = useState(new Date());
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60000); // Update every minute
     return () => clearInterval(interval);
+  }, []);
+
+  // Scroll to 9 AM initially
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      // 9 hours * 60px/hour = 540px
+      scrollContainerRef.current.scrollTop = 540;
+    }
   }, []);
 
   // At 1px per minute, 24 hours = 1440px height.
@@ -111,7 +120,7 @@ export default function Timeline({
   };
 
   return (
-    <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col overflow-hidden min-h-[700px]">
+    <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col overflow-hidden h-[800px] max-h-[calc(100vh-2rem)]">
       <div className="flex flex-wrap items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800 gap-4">
         <div className="flex items-center space-x-2">
           <button onClick={handlePrevWeek} className="px-3 py-1.5 border border-zinc-200 dark:border-zinc-700 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 text-sm font-medium transition-colors">&larr; Prev</button>
@@ -125,38 +134,50 @@ export default function Timeline({
       </div>
 
       {/* Scrollable Timeline Area */}
-      <div className="flex flex-1 overflow-auto relative">
-        <div className="inline-flex min-w-full">
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto relative">
+        <div className="inline-flex flex-col min-w-full">
           
-          {/* Left Column: Time Labels */}
-          <div className="w-16 flex-shrink-0 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky left-0 z-20">
-            <div className="h-20 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 z-30"></div>
-            <div className="relative h-[1440px]">
-              {hours.map(hour => (
-                <div key={hour} className="absolute w-full text-right pr-2 text-xs text-zinc-500 font-medium" style={{ top: `${hour * 60}px`, marginTop: '-8px' }}>
-                  {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Days Columns */}
-          {weekDays.map((day) => {
-            const isToday = toISODate(day) === todayStr;
-            return (
-              <div key={day.toISOString()} className="flex-1 min-w-[150px] border-r border-zinc-200 dark:border-zinc-800 last:border-r-0">
-                {/* Day Header (Sticky) */}
-                <div className="h-20 p-3 text-center border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-900/90 backdrop-blur-sm sticky top-0 z-10">
+          {/* Sticky Header Row */}
+          <div className="sticky top-0 z-50 flex bg-white dark:bg-zinc-900 shadow-sm border-b border-zinc-200 dark:border-zinc-800">
+            {/* Top-Left Corner */}
+            <div className="w-16 flex-shrink-0 sticky left-0 z-50 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800"></div>
+            
+            {/* Day Headers */}
+            {weekDays.map((day) => {
+              const isToday = toISODate(day) === todayStr;
+              return (
+                <div key={day.toISOString()} className="flex-1 min-w-[150px] h-20 p-3 text-center border-r border-zinc-200 dark:border-zinc-800 last:border-r-0 bg-zinc-50/90 dark:bg-zinc-900/90 backdrop-blur-sm">
                   <div className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{day.toLocaleDateString("en-US", { weekday: "short" })}</div>
                   <div className={`mt-2 text-xl ${isToday ? 'bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center mx-auto font-bold shadow-sm' : ''}`}>{day.getDate()}</div>
                 </div>
-                
-                {/* 24-Hour Day Timeline */}
-                <div 
-                  className="relative h-[1440px] bg-zinc-50/30 dark:bg-zinc-950/30"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => handleDrop(e, day)}
-                >
+              );
+            })}
+          </div>
+
+          {/* Timeline Body Row */}
+          <div className="flex flex-1">
+            {/* Left Column: Time Labels */}
+            <div className="w-16 flex-shrink-0 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky left-0 z-40">
+              <div className="relative h-[1440px]">
+                {hours.map(hour => (
+                  <div key={hour} className="absolute w-full text-right pr-2 text-xs text-zinc-500 font-medium" style={{ top: `${hour * 60}px`, marginTop: '-8px' }}>
+                    {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Days Columns */}
+            {weekDays.map((day) => {
+              const isToday = toISODate(day) === todayStr;
+              return (
+                <div key={day.toISOString()} className="flex-1 min-w-[150px] border-r border-zinc-200 dark:border-zinc-800 last:border-r-0">
+                  {/* 24-Hour Day Timeline */}
+                  <div 
+                    className="relative h-[1440px] bg-zinc-50/30 dark:bg-zinc-950/30"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleDrop(e, day)}
+                  >
                   {/* Hourly Grid Lines */}
                   {hours.map(hour => (
                     <div key={hour} className="absolute w-full border-t border-zinc-200 dark:border-zinc-800 opacity-50 pointer-events-none" style={{ top: `${hour * 60}px` }} />
@@ -180,6 +201,7 @@ export default function Timeline({
               </div>
             )
           })}
+          </div>
         </div>
       </div>
     </div>

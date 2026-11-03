@@ -6,6 +6,7 @@ import { toISODate } from "@/lib/utils";
 import Sidebar from "@/components/Sidebar";
 import Timeline from "@/components/Timeline";
 import SessionModal from "@/components/SessionModal";
+import { getSeedData } from "@/components/seeds";
 
 export default function SchedulerApp() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -40,6 +41,11 @@ export default function SchedulerApp() {
     setSessions((prev) => prev.filter((s) => s.id !== id));
   };
 
+  const handleLoadSeed = (type: 'normal' | 'busy' | 'conflicts') => {
+    const seedSessions = getSeedData(type, currentDate);
+    setSessions(seedSessions); 
+  };
+
   // Prevent rendering until the client has mounted to avoid hydration mismatches
   if (!isMounted) return null;
 
@@ -59,6 +65,7 @@ export default function SchedulerApp() {
             setEditingSession(null);
             setIsModalOpen(true);
           }}
+          onLoadSeed={handleLoadSeed}
         />
         <Timeline 
           currentDate={currentDate}
