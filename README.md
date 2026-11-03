@@ -2,35 +2,31 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, install dependencies:
+```bash
+npm install
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## About Scheduler
 
-## Learn More
+This was written entirely aid of Gemini Code Assist.  The instuctions for it are in AGENTS.md
 
-To learn more about Next.js, take a look at the following resources:
+I chose to use a default Next.js app, as based on our conversation it seemed like the appropriate choice.
+Due to time constraints, I did not add any tests.
+I can't say I am specifically proud of any one feature that was added, as this was all done by AI, but completing it within the time constraints with the little experience I have with the chosen framework does boost my confidence and gives me a great deal of satisfaction.
+With more time, I would massage some of the code that was generated as I saw a number of places where I would have written things differently and organized them better.  In the future I would provide code examples for things I find I dislike so the AI does a better job of writing to my taste.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+I decided to implement drag-and-drop and resize functionality for individual sessions as that seemed to make the app more "complete".
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+I also added three "Seed" options, just to see what it looks like under different circumstances without having to actually add them manually.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Thanks again for your time!  I hope you are pleased with the results.
