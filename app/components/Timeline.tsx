@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Session } from "@/lib/types";
 import { toISODate } from "@/lib/utils";
+import DaySessions from "./DaySessions";
 
 interface TimelineProps {
   currentDate: Date;
@@ -139,27 +140,11 @@ export default function Timeline({
                     </div>
                   )}
 
-                  {/* Session Blocks */}
-                  {sessions
-                    .filter(session => session.date === toISODate(day))
-                    .map(session => {
-                      const [hours, minutes] = session.startTime.split(':').map(Number);
-                      const top = hours * 60 + minutes;
-                      
-                      return (
-                        <div
-                          key={session.id}
-                          onClick={() => onSessionClick(session)}
-                          className="absolute left-1 right-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-1.5 sm:p-2 overflow-hidden z-10 hover:z-20 hover:shadow-md transition-all cursor-pointer"
-                          style={{ top: `${top}px`, height: `${session.durationMinutes}px` }}
-                        >
-                          <div className="text-xs font-semibold text-blue-700 dark:text-blue-300 leading-tight">{session.title}</div>
-                          <div className="text-[10px] text-blue-600 dark:text-blue-400 opacity-80 mt-0.5">
-                            {session.startTime} ({session.durationMinutes}m)
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <DaySessions 
+                    day={day} 
+                    sessions={sessions} 
+                    onSessionClick={onSessionClick} 
+                  />
                 </div>
               </div>
             )

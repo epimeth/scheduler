@@ -30,7 +30,8 @@ There is deliberately no provided design or detailed spec. Make the product deci
 
 Make sure to create each component in it's own file, according to nextjs best practices.
 
-Adding a session should be done via a dedicated button and modal.
+Adding a session should be done via a dedicated button and modal.  Hitting "escape" should close the modal.
+
 The session timeline should include all 5 days of the week, with a toggle to display the weekend, and the current day highlighted.
 The "weekend" toggle should be highlighted if there is an existing session for the upcoming weekend.
 Previous and Next buttons, as well as a mini calendar, should be included as well, in order to jump to a specific date. The mini calendar should also highlight days with existing sessions.
