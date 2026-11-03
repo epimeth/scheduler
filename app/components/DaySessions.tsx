@@ -8,9 +8,10 @@ interface DaySessionsProps {
   day: Date;
   sessions: Session[];
   onSessionClick: (session: Session) => void;
+  onUpdateSession: (session: Session) => void;
 }
 
-export default function DaySessions({ day, sessions, onSessionClick }: DaySessionsProps) {
+export default function DaySessions({ day, sessions, onSessionClick, onUpdateSession }: DaySessionsProps) {
   const currentDayStr = toISODate(day);
   const prevDay = new Date(day);
   prevDay.setDate(prevDay.getDate() - 1);
@@ -94,6 +95,13 @@ export default function DaySessions({ day, sessions, onSessionClick }: DaySessio
         const widthPercent = 100 / session.totalColumns;
         const leftPercent = session.column * widthPercent;
 
+        // Calculate max allowed duration before it hits the NEXT session to prevent conflicts
+        const nextSessionStarts = combinedSessions
+          .filter(s => s.id !== session.id && s.startMin >= session.startMin)
+          .map(s => s.startMin);
+        const maxPossibleStart = nextSessionStarts.length > 0 ? Math.min(...nextSessionStarts) : 1440;
+        const maxDuration = Math.max(15, maxPossibleStart - session.startMin); // Guarantee at least 15m
+
         return (
           <SessionBlock
             key={session.id}
@@ -105,7 +113,9 @@ export default function DaySessions({ day, sessions, onSessionClick }: DaySessio
             isConflicting={session.isConflicting}
             isOverflowing={isOverflowing}
             isOverflow={session.isOverflow}
+            maxDuration={maxDuration}
             onClick={() => onSessionClick(session.originalSession)}
+            onUpdateSession={onUpdateSession}
           />
         );
       })}

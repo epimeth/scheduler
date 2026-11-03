@@ -174,6 +174,7 @@ export default function Timeline({
                     day={day} 
                     sessions={sessions} 
                     onSessionClick={onSessionClick} 
+                    onUpdateSession={onUpdateSession}
                   />
                 </div>
               </div>
