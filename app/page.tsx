@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 export type Session = {
   id: string;
@@ -20,8 +20,18 @@ function toISODate(date: Date) {
 
 export default function SchedulerApp() {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Use a stable initial date to avoid Next.js hydration warnings during prerender
+  const [currentDate, setCurrentDate] = useState(new Date("2024-01-01T00:00:00"));
   const [showWeekends, setShowWeekends] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [todayStr, setTodayStr] = useState("");
+
+  useEffect(() => {
+    const now = new Date();
+    setCurrentDate(now);
+    setTodayStr(toISODate(now));
+    setIsMounted(true);
+  }, []);
 
   // --- Computed Date Data ---
 
@@ -101,7 +111,8 @@ export default function SchedulerApp() {
 
   const handleToday = () => setCurrentDate(new Date());
 
-  const todayStr = toISODate(new Date());
+  // Prevent rendering until the client has mounted to avoid hydration mismatches
+  if (!isMounted) return null;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4 sm:p-8 font-sans text-zinc-900 dark:text-zinc-100">
