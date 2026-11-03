@@ -81,6 +81,7 @@ export default function SchedulerApp() {
         onDelete={handleDeleteSession} 
         initialDate={currentDate} 
         editingSession={editingSession}
+        sessions={sessions}
       />
     </div>
   );
