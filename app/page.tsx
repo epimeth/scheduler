@@ -71,6 +71,7 @@ export default function SchedulerApp() {
             setEditingSession(session);
             setIsModalOpen(true);
           }}
+          onUpdateSession={(updatedSession) => handleSaveSession(updatedSession, updatedSession.id)}
         />
       </main>
 

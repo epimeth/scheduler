@@ -1,5 +1,6 @@
 "use client";
 
+import { DragEvent } from "react";
 import { Session } from "@/lib/types";
 
 interface SessionBlockProps {
@@ -35,10 +36,22 @@ export default function SessionBlock({
   if (isOverflowing) radiusClass = 'rounded-t-md rounded-b-none border-b-dashed border-b-2';
   if (isOverflow) radiusClass = 'rounded-b-md rounded-t-none border-t-dashed border-t-2';
 
+  // Setup HTML5 Drag and Drop payload
+  const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
+    e.dataTransfer.setData("text/plain", session.id);
+    
+    // Calculate how far down the block the user clicked so it doesn't snap to the mouse awkwardly
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetY = e.clientY - rect.top;
+    e.dataTransfer.setData("offsetY", offsetY.toString());
+  };
+
   return (
     <div
       onClick={onClick}
-      className={`absolute ${baseBg} border ${baseBorder} p-1.5 sm:p-2 overflow-hidden z-10 hover:z-20 hover:shadow-md transition-all cursor-pointer ${radiusClass}`}
+      draggable
+      onDragStart={handleDragStart}
+      className={`absolute ${baseBg} border ${baseBorder} p-1.5 sm:p-2 overflow-hidden z-10 hover:z-30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing ${radiusClass}`}
       style={{ 
         top: `${top}px`, 
         height: `${height}px`,

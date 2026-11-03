@@ -13,6 +13,7 @@ interface TimelineProps {
   setShowWeekends: (show: boolean) => void;
   todayStr: string;
   onSessionClick: (session: Session) => void;
+  onUpdateSession: (session: Session) => void;
 }
 
 export default function Timeline({
@@ -22,7 +23,8 @@ export default function Timeline({
   showWeekends,
   setShowWeekends,
   todayStr,
-  onSessionClick
+  onSessionClick,
+  onUpdateSession
 }: TimelineProps) {
   // Track current time to position the red indicator line
   const [now, setNow] = useState(new Date());
@@ -84,6 +86,30 @@ export default function Timeline({
   // Generate 24 hours (0-23) for the grid
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
+  // Handle drop to reschedule session
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetDay: Date) => {
+    e.preventDefault();
+    const sessionId = e.dataTransfer.getData("text/plain");
+    if (!sessionId) return;
+    
+    const offsetY = parseFloat(e.dataTransfer.getData("offsetY")) || 0;
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top - offsetY;
+
+    // Snap to 15 mins (15px) and clamp between 00:00 and the end of the day
+    let totalMinutes = Math.round(y / 15) * 15;
+    totalMinutes = Math.max(0, Math.min(totalMinutes, 1440 - session.durationMinutes));
+
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    const newStartTime = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+    
+    onUpdateSession({ ...session, date: toISODate(targetDay), startTime: newStartTime });
+  };
+
   return (
     <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col overflow-hidden min-h-[700px]">
       <div className="flex flex-wrap items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800 gap-4">
@@ -126,7 +152,11 @@ export default function Timeline({
                 </div>
                 
                 {/* 24-Hour Day Timeline */}
-                <div className="relative h-[1440px] bg-zinc-50/30 dark:bg-zinc-950/30">
+                <div 
+                  className="relative h-[1440px] bg-zinc-50/30 dark:bg-zinc-950/30"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => handleDrop(e, day)}
+                >
                   {/* Hourly Grid Lines */}
                   {hours.map(hour => (
                     <div key={hour} className="absolute w-full border-t border-zinc-200 dark:border-zinc-800 opacity-50 pointer-events-none" style={{ top: `${hour * 60}px` }} />
