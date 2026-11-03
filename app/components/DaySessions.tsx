@@ -2,6 +2,7 @@
 
 import { Session } from "@/lib/types";
 import { toISODate } from "@/lib/utils";
+import SessionBlock from "./SessionBlock";
 
 interface DaySessionsProps {
   day: Date;
@@ -93,36 +94,19 @@ export default function DaySessions({ day, sessions, onSessionClick }: DaySessio
         const widthPercent = 100 / session.totalColumns;
         const leftPercent = session.column * widthPercent;
 
-        // Conditional styling for conflicts
-        const baseBg = session.isConflicting ? 'bg-red-50 dark:bg-red-900/20' : 'bg-blue-50 dark:bg-blue-900/20';
-        const baseBorder = session.isConflicting ? 'border-red-400 dark:border-red-700' : 'border-blue-400 dark:border-blue-700';
-        const baseText = session.isConflicting ? 'text-red-800 dark:text-red-200' : 'text-blue-800 dark:text-blue-200';
-        const subText = session.isConflicting ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400';
-        
-        let radiusClass = 'rounded-md';
-        if (isOverflowing) radiusClass = 'rounded-t-md rounded-b-none border-b-dashed border-b-2';
-        if (session.isOverflow) radiusClass = 'rounded-b-md rounded-t-none border-t-dashed border-t-2';
-
         return (
-          <div
+          <SessionBlock
             key={session.id}
+            session={session.originalSession}
+            top={top}
+            height={height}
+            widthPercent={widthPercent}
+            leftPercent={leftPercent}
+            isConflicting={session.isConflicting}
+            isOverflowing={isOverflowing}
+            isOverflow={session.isOverflow}
             onClick={() => onSessionClick(session.originalSession)}
-            className={`absolute ${baseBg} border ${baseBorder} p-1.5 sm:p-2 overflow-hidden z-10 hover:z-20 hover:shadow-md transition-all cursor-pointer ${radiusClass}`}
-            style={{ 
-              top: `${top}px`, 
-              height: `${height}px`,
-              width: `calc(${widthPercent}% - 4px)`,
-              left: `calc(${leftPercent}% + 2px)`
-            }}
-          >
-            <div className={`text-xs font-semibold ${baseText} leading-tight`}>
-              {session.isConflicting && <span className="mr-1">⚠️</span>}
-              {session.title} {session.isOverflow && <span className="opacity-75">(cont.)</span>}
-            </div>
-            <div className={`text-[10px] ${subText} opacity-90 mt-0.5`}>
-              {session.startTime} {session.isConflicting && '- Conflict!'}
-            </div>
-          </div>
+          />
         );
       })}
     </>
