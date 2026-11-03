@@ -11,6 +11,7 @@ interface TimelineProps {
   showWeekends: boolean;
   setShowWeekends: (show: boolean) => void;
   todayStr: string;
+  onSessionClick: (session: Session) => void;
 }
 
 export default function Timeline({
@@ -19,7 +20,8 @@ export default function Timeline({
   sessions,
   showWeekends,
   setShowWeekends,
-  todayStr
+  todayStr,
+  onSessionClick
 }: TimelineProps) {
   // Track current time to position the red indicator line
   const [now, setNow] = useState(new Date());
@@ -147,6 +149,7 @@ export default function Timeline({
                       return (
                         <div
                           key={session.id}
+                          onClick={() => onSessionClick(session)}
                           className="absolute left-1 right-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-1.5 sm:p-2 overflow-hidden z-10 hover:z-20 hover:shadow-md transition-all cursor-pointer"
                           style={{ top: `${top}px`, height: `${session.durationMinutes}px` }}
                         >

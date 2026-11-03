@@ -15,6 +15,7 @@ export default function SchedulerApp() {
   const [isMounted, setIsMounted] = useState(false);
   const [todayStr, setTodayStr] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
 
   useEffect(() => {
     const now = new Date();
@@ -23,12 +24,20 @@ export default function SchedulerApp() {
     setIsMounted(true);
   }, []);
 
-  const handleAddSession = (newSessionData: Omit<Session, "id">) => {
-    const newSession: Session = {
-      ...newSessionData,
-      id: crypto.randomUUID(),
-    };
-    setSessions((prev) => [...prev, newSession]);
+  const handleSaveSession = (sessionData: Omit<Session, "id">, id?: string) => {
+    if (id) {
+      setSessions((prev) => prev.map((s) => (s.id === id ? { ...sessionData, id } : s)));
+    } else {
+      const newSession: Session = {
+        ...sessionData,
+        id: crypto.randomUUID(),
+      };
+      setSessions((prev) => [...prev, newSession]);
+    }
+  };
+
+  const handleDeleteSession = (id: string) => {
+    setSessions((prev) => prev.filter((s) => s.id !== id));
   };
 
   // Prevent rendering until the client has mounted to avoid hydration mismatches
@@ -46,7 +55,10 @@ export default function SchedulerApp() {
           currentDate={currentDate} 
           setCurrentDate={setCurrentDate} 
           sessions={sessions} 
-          onAddClick={() => setIsModalOpen(true)}
+          onAddClick={() => {
+            setEditingSession(null);
+            setIsModalOpen(true);
+          }}
         />
         <Timeline 
           currentDate={currentDate}
@@ -55,14 +67,20 @@ export default function SchedulerApp() {
           showWeekends={showWeekends}
           setShowWeekends={setShowWeekends}
           todayStr={todayStr}
+          onSessionClick={(session) => {
+            setEditingSession(session);
+            setIsModalOpen(true);
+          }}
         />
       </main>
 
       <SessionModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSave={handleAddSession} 
+        onSave={handleSaveSession}
+        onDelete={handleDeleteSession} 
         initialDate={currentDate} 
+        editingSession={editingSession}
       />
     </div>
   );

@@ -7,11 +7,13 @@ import { toISODate } from "@/lib/utils";
 interface SessionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (session: Omit<Session, "id">) => void;
+  onSave: (session: Omit<Session, "id">, id?: string) => void;
+  onDelete?: (id: string) => void;
   initialDate: Date;
+  editingSession?: Session | null;
 }
 
-export default function SessionModal({ isOpen, onClose, onSave, initialDate }: SessionModalProps) {
+export default function SessionModal({ isOpen, onClose, onSave, onDelete, initialDate, editingSession }: SessionModalProps) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
@@ -20,12 +22,19 @@ export default function SessionModal({ isOpen, onClose, onSave, initialDate }: S
   // Reset form with default values when opened
   useEffect(() => {
     if (isOpen) {
-      setTitle("");
-      setDate(toISODate(initialDate));
-      setStartTime("09:00");
-      setDuration(60);
+      if (editingSession) {
+        setTitle(editingSession.title);
+        setDate(editingSession.date);
+        setStartTime(editingSession.startTime);
+        setDuration(editingSession.durationMinutes);
+      } else {
+        setTitle("");
+        setDate(toISODate(initialDate));
+        setStartTime("09:00");
+        setDuration(60);
+      }
     }
-  }, [isOpen, initialDate]);
+  }, [isOpen, initialDate, editingSession]);
 
   if (!isOpen) return null;
 
@@ -36,7 +45,7 @@ export default function SessionModal({ isOpen, onClose, onSave, initialDate }: S
       date,
       startTime,
       durationMinutes: Number(duration),
-    });
+    }, editingSession?.id);
     onClose();
   };
 
@@ -44,7 +53,7 @@ export default function SessionModal({ isOpen, onClose, onSave, initialDate }: S
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl w-full max-w-md border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-lg font-semibold">Add New Session</h2>
+          <h2 className="text-lg font-semibold">{editingSession ? "Edit Session" : "Add New Session"}</h2>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
@@ -92,9 +101,16 @@ export default function SessionModal({ isOpen, onClose, onSave, initialDate }: S
               />
             </div>
           </div>
-          <div className="pt-4 flex justify-end space-x-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">Cancel</button>
-            <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-sm">Save Session</button>
+          <div className="pt-4 flex justify-between items-center">
+            <div>
+              {editingSession && onDelete && (
+                <button type="button" onClick={() => { onDelete(editingSession.id); onClose(); }} className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">Delete</button>
+              )}
+            </div>
+            <div className="flex space-x-3">
+              <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors">Cancel</button>
+              <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-sm">Save Session</button>
+            </div>
           </div>
         </form>
       </div>
