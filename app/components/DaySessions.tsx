@@ -102,6 +102,12 @@ export default function DaySessions({ day, sessions, onSessionClick, onUpdateSes
         const maxPossibleStart = nextSessionStarts.length > 0 ? Math.min(...nextSessionStarts) : 1440;
         const maxDuration = Math.max(15, maxPossibleStart - session.startMin); // Guarantee at least 15m
 
+        // Calculate min allowed start time to prevent conflicting with a PRIOR session
+        const prevSessionEnds = combinedSessions
+          .filter(s => s.id !== session.id && s.endMin <= session.startMin)
+          .map(s => s.endMin);
+        const minStart = prevSessionEnds.length > 0 ? Math.max(...prevSessionEnds) : 0;
+
         return (
           <SessionBlock
             key={session.id}
@@ -114,6 +120,7 @@ export default function DaySessions({ day, sessions, onSessionClick, onUpdateSes
             isOverflowing={isOverflowing}
             isOverflow={session.isOverflow}
             maxDuration={maxDuration}
+            minStart={minStart}
             onClick={() => onSessionClick(session.originalSession)}
             onUpdateSession={onUpdateSession}
           />

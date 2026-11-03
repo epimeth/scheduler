@@ -14,6 +14,7 @@ interface SessionBlockProps {
   isOverflowing: boolean;
   isOverflow: boolean;
   maxDuration: number;
+  minStart: number;
   onClick: () => void;
   onUpdateSession: (session: Session) => void;
 }
@@ -28,6 +29,7 @@ export default function SessionBlock({
   isOverflowing,
   isOverflow,
   maxDuration,
+  minStart,
   onClick,
   onUpdateSession
 }: SessionBlockProps) {
@@ -86,8 +88,8 @@ export default function SessionBlock({
         newDelta = dragState.startHeight - 15;
       }
       
-      if (dragState.startTop + newDelta < 0) {
-        newDelta = -dragState.startTop;
+      if (dragState.startTop + newDelta < minStart) {
+        newDelta = minStart - dragState.startTop;
       }
       
       setLocalTop(dragState.startTop + newDelta);
