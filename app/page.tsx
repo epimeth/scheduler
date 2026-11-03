@@ -5,6 +5,7 @@ import { Session } from "@/lib/types";
 import { toISODate } from "@/lib/utils";
 import Sidebar from "@/components/Sidebar";
 import Timeline from "@/components/Timeline";
+import SessionModal from "@/components/SessionModal";
 
 export default function SchedulerApp() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -13,6 +14,7 @@ export default function SchedulerApp() {
   const [showWeekends, setShowWeekends] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [todayStr, setTodayStr] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const now = new Date();
@@ -20,6 +22,14 @@ export default function SchedulerApp() {
     setTodayStr(toISODate(now));
     setIsMounted(true);
   }, []);
+
+  const handleAddSession = (newSessionData: Omit<Session, "id">) => {
+    const newSession: Session = {
+      ...newSessionData,
+      id: crypto.randomUUID(),
+    };
+    setSessions((prev) => [...prev, newSession]);
+  };
 
   // Prevent rendering until the client has mounted to avoid hydration mismatches
   if (!isMounted) return null;
@@ -36,6 +46,7 @@ export default function SchedulerApp() {
           currentDate={currentDate} 
           setCurrentDate={setCurrentDate} 
           sessions={sessions} 
+          onAddClick={() => setIsModalOpen(true)}
         />
         <Timeline 
           currentDate={currentDate}
@@ -46,6 +57,13 @@ export default function SchedulerApp() {
           todayStr={todayStr}
         />
       </main>
+
+      <SessionModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSave={handleAddSession} 
+        initialDate={currentDate} 
+      />
     </div>
   );
 }
