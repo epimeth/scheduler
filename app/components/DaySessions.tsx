@@ -15,46 +15,113 @@ export default function DaySessions({ day, sessions, onSessionClick }: DaySessio
   prevDay.setDate(prevDay.getDate() - 1);
   const prevDayStr = toISODate(prevDay);
 
-  const todaysSessions = sessions.filter(s => s.date === currentDayStr);
+  // 1. Gather all sessions that visually appear on this day
+  const todaysSessionsRaw = sessions.filter(s => s.date === currentDayStr).map(s => {
+    const [h, m] = s.startTime.split(':').map(Number);
+    return { ...s, startMin: h * 60 + m, endMin: h * 60 + m + s.durationMinutes, isOverflow: false, originalSession: s };
+  });
+
   const overflowingFromYesterday = sessions.filter(s => {
     if (s.date !== prevDayStr) return false;
     const [h, m] = s.startTime.split(':').map(Number);
     return (h * 60 + m) + s.durationMinutes > 1440; // Crosses midnight
+  }).map(s => {
+    const [h, m] = s.startTime.split(':').map(Number);
+    const overflowHeight = (h * 60 + m) + s.durationMinutes - 1440;
+    return { ...s, id: `${s.id}-overflow`, startMin: 0, endMin: overflowHeight, isOverflow: true, originalSession: s };
+  });
+
+  const combinedSessions = [...todaysSessionsRaw, ...overflowingFromYesterday]
+    .sort((a, b) => a.startMin - b.startMin || b.endMin - a.endMin);
+
+  // 2. Group overlapping sessions
+  const groups: (typeof combinedSessions)[] = [];
+  let currentGroup: typeof combinedSessions = [];
+  let groupEnd = 0;
+
+  combinedSessions.forEach(s => {
+    if (s.startMin < groupEnd) {
+      currentGroup.push(s);
+      groupEnd = Math.max(groupEnd, s.endMin);
+    } else {
+      if (currentGroup.length > 0) groups.push(currentGroup);
+      currentGroup = [s];
+      groupEnd = s.endMin;
+    }
+  });
+  if (currentGroup.length > 0) groups.push(currentGroup);
+
+  // 3. Assign columns and flags
+  const layoutSessions: (typeof combinedSessions[0] & { column: number, totalColumns: number, isConflicting: boolean })[] = [];
+  
+  groups.forEach(group => {
+    const isConflicting = group.length > 1; // Any group with >1 item has overlapping conflicts
+    const columns: typeof currentGroup[] = [];
+    const groupLayouts: any[] = [];
+
+    group.forEach(s => {
+      let placed = false;
+      for (let i = 0; i < columns.length; i++) {
+        const lastInCol = columns[i][columns[i].length - 1];
+        // Using <= safely allows back-to-back sessions in the same column without flagging as conflict
+        if (lastInCol.endMin <= s.startMin) {
+          columns[i].push(s);
+          groupLayouts.push({ ...s, column: i, isConflicting });
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        columns.push([s]);
+        groupLayouts.push({ ...s, column: columns.length - 1, isConflicting });
+      }
+    });
+
+    groupLayouts.forEach(s => {
+      s.totalColumns = columns.length;
+      layoutSessions.push(s);
+    });
   });
 
   return (
     <>
-      {todaysSessions.map(session => {
-        const [hours, minutes] = session.startTime.split(':').map(Number);
-        const top = hours * 60 + minutes;
-        const isOverflowing = top + session.durationMinutes > 1440;
-        const height = Math.min(session.durationMinutes, 1440 - top); // Cap at 24:00
+      {layoutSessions.map(session => {
+        const isOverflowing = session.endMin > 1440 && !session.isOverflow;
+        const height = session.isOverflow ? session.endMin : Math.min(session.durationMinutes, 1440 - session.startMin);
+        const top = session.startMin;
         
+        const widthPercent = 100 / session.totalColumns;
+        const leftPercent = session.column * widthPercent;
+
+        // Conditional styling for conflicts
+        const baseBg = session.isConflicting ? 'bg-red-50 dark:bg-red-900/20' : 'bg-blue-50 dark:bg-blue-900/20';
+        const baseBorder = session.isConflicting ? 'border-red-400 dark:border-red-700' : 'border-blue-400 dark:border-blue-700';
+        const baseText = session.isConflicting ? 'text-red-800 dark:text-red-200' : 'text-blue-800 dark:text-blue-200';
+        const subText = session.isConflicting ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400';
+        
+        let radiusClass = 'rounded-md';
+        if (isOverflowing) radiusClass = 'rounded-t-md rounded-b-none border-b-dashed border-b-2';
+        if (session.isOverflow) radiusClass = 'rounded-b-md rounded-t-none border-t-dashed border-t-2';
+
         return (
           <div
             key={session.id}
-            onClick={() => onSessionClick(session)}
-            className={`absolute left-1 right-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-400 dark:border-blue-700 p-1.5 sm:p-2 overflow-hidden z-10 hover:z-20 hover:shadow-md transition-all cursor-pointer ${isOverflowing ? 'rounded-t-md rounded-b-none border-b-dashed border-b-2' : 'rounded-md'}`}
-            style={{ top: `${top}px`, height: `${height}px` }}
+            onClick={() => onSessionClick(session.originalSession)}
+            className={`absolute ${baseBg} border ${baseBorder} p-1.5 sm:p-2 overflow-hidden z-10 hover:z-20 hover:shadow-md transition-all cursor-pointer ${radiusClass}`}
+            style={{ 
+              top: `${top}px`, 
+              height: `${height}px`,
+              width: `calc(${widthPercent}% - 4px)`,
+              left: `calc(${leftPercent}% + 2px)`
+            }}
           >
-            <div className="text-xs font-semibold text-blue-800 dark:text-blue-200 leading-tight">{session.title}</div>
-            <div className="text-[10px] text-blue-600 dark:text-blue-400 opacity-90 mt-0.5">{session.startTime}</div>
-          </div>
-        );
-      })}
-      {overflowingFromYesterday.map(session => {
-        const [hours, minutes] = session.startTime.split(':').map(Number);
-        const top = hours * 60 + minutes;
-        const overflowHeight = (top + session.durationMinutes) - 1440;
-        
-        return (
-          <div
-            key={`${session.id}-overflow`}
-            onClick={() => onSessionClick(session)}
-            className="absolute left-1 right-1 top-0 bg-blue-50 dark:bg-blue-900/20 border border-blue-400 dark:border-blue-700 rounded-b-md rounded-t-none border-t-dashed border-t-2 p-1.5 sm:p-2 overflow-hidden z-10 hover:z-20 hover:shadow-md transition-all cursor-pointer"
-            style={{ height: `${overflowHeight}px` }}
-          >
-            <div className="text-xs font-semibold text-blue-800 dark:text-blue-200 leading-tight">{session.title} <span className="opacity-75">(cont.)</span></div>
+            <div className={`text-xs font-semibold ${baseText} leading-tight`}>
+              {session.isConflicting && <span className="mr-1">⚠️</span>}
+              {session.title} {session.isOverflow && <span className="opacity-75">(cont.)</span>}
+            </div>
+            <div className={`text-[10px] ${subText} opacity-90 mt-0.5`}>
+              {session.startTime} {session.isConflicting && '- Conflict!'}
+            </div>
           </div>
         );
       })}
